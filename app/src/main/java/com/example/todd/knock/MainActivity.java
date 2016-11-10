@@ -10,12 +10,18 @@ import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.Environment;
 import android.support.annotation.IntegerRes;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -42,6 +48,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     };
     private static final int RECORD_REQUEST_CODE = 101;
 
+    //State variables
+    private final int START = 0;
+    private final int RECORDING = 1;
+    private int state = START;
+
+    private FileOutputStream os;
+
+    //Sensor readings
+    private float accel_X;
+    private float accel_Y;
+    private float accel_Z;
+    private float gyro_X;
+    private float gyro_Y;
+    private float gyro_Z;
+
+    //Records initial time for app
+    private long startTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +118,44 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Log.d("AUDIO", "AudioRecord failed to initialize");
         }
 
+        Button btnChange = (Button) findViewById(R.id.startButton);
+        btnChange.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TextView state_txt = (TextView) findViewById(R.id.stateText);
+                //state_txt.setText("START RECORDING");
+
+                //Button changes the state
+                if(state == START) {
+                    try {
+                        // get the path to sdcard
+                        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "sensors.csv");
+                        Log.d("WRITING FILE", "File created");
+                        os = new FileOutputStream(file);
+                        Log.d("WRITING FILE", "OS Created");
+                        startTime = System.nanoTime();
+                        state = RECORDING;
+                        state_txt.setText("RECORDING...");
+                        Log.d("STATE", "Started Recording");
+
+                    }catch (Exception e){
+                        Log.d("WRITING FILE", e.toString());
+                    }
+                }
+                else if(state == RECORDING){
+                    try {
+                        os.close();
+                        state = START;
+                        Log.d("WRITING FILE", "OS Closed");
+                        state_txt.setText("START RECORDING");
+                        Log.d("STATE", "Stopped Recording");
+                    }catch(Exception e){
+
+                    }
+                }
+            }
+        });
+
     }
 
     @Override
@@ -109,15 +170,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //Case statement for different types of sensor events
         switch (sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
+                accel_X = event.values[0];
+                accel_Y = event.values[1];
+                accel_Z = event.values[2];
+
                 mAccel_x.setText("X Accel: " + event.values[0]);
                 mAccel_y.setText("Y Accel: " + event.values[1]);
                 mAccel_z.setText("Z Accel: " + event.values[2]);
                 break;
+
             case Sensor.TYPE_GYROSCOPE:
+                gyro_X = event.values[0];
+                gyro_Y = event.values[1];
+                gyro_Z = event.values[2];
+
                 mGyro_x.setText("X Gyro: " + event.values[0]);
                 mGyro_y.setText("Y Gyro: " + event.values[1]);
                 mGyro_z.setText("Z Gyro: " + event.values[2]);
                 break;
+        }
+
+        //Write data in text file
+        if(state == RECORDING){
+            try {
+                String data = "";
+                Long time = (System.nanoTime()-startTime)/1000000;
+                data = time + ", " + accel_X + ", " + accel_Y  + ", " + accel_Z + ", " + gyro_X + ", " + gyro_Y + ", " + gyro_Z + "\n";
+                os.write(data.getBytes());
+            }catch(Exception e){
+            }
         }
     }
 }
