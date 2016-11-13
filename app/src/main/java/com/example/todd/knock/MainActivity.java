@@ -66,6 +66,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //Records initial time for app
     private long startTime = 0;
 
+    //Knock Variables
+    private long prevKnock = 0;
+    private long currKnock = 0;
+    private int numKnock = 0;
+    private TextView mNumKnock;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,6 +111,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mGyro_x = (TextView) findViewById(R.id.textView4);
         mGyro_y = (TextView) findViewById(R.id.textView5);
         mGyro_z = (TextView) findViewById(R.id.textView6);
+
+        mNumKnock = (TextView) findViewById(R.id.textView7);
 
         int freq = 44100;
         int chan = AudioFormat.CHANNEL_IN_STEREO;
@@ -177,6 +185,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mAccel_x.setText("X Accel: " + event.values[0]);
                 mAccel_y.setText("Y Accel: " + event.values[1]);
                 mAccel_z.setText("Z Accel: " + event.values[2]);
+
+                //Process knock using accel z - THRESHOLD METHOD
+                if(accel_Z>10.5 || accel_Z<-10.5){
+                    currKnock = System.currentTimeMillis();
+                    if((currKnock-prevKnock)>100){
+                        numKnock++;
+                    }
+
+                    prevKnock = currKnock;
+                }
+
+                mNumKnock.setText("Num Knocks: "+numKnock);
+
                 break;
 
             case Sensor.TYPE_GYROSCOPE:
@@ -198,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 data = time + ", " + accel_X + ", " + accel_Y  + ", " + accel_Z + ", " + gyro_X + ", " + gyro_Y + ", " + gyro_Z + "\n";
                 os.write(data.getBytes());
             }catch(Exception e){
+                Log.e("WRITING FILE", "error writing file: " + e);
             }
         }
     }
