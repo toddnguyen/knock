@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView mGyro_y;
     private TextView mGyro_z;
 
-    private AudioRecord mAudioRecorder;
+    private Audio_Record mAudioRecorder;
 
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -114,17 +114,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         mNumKnock = (TextView) findViewById(R.id.textView7);
 
-        int freq = 44100;
-        int chan = AudioFormat.CHANNEL_IN_STEREO;
-        int enc  = AudioFormat.ENCODING_PCM_16BIT;
-        int src  = MediaRecorder.AudioSource.DEFAULT;
-        int buflen = AudioRecord.getMinBufferSize(freq, chan, enc);
-        mAudioRecorder = new AudioRecord(src,freq,chan,enc,20*buflen);
-        if(mAudioRecorder.getState() == AudioRecord.STATE_INITIALIZED) {
-            Log.d("AUDIO", "AudioRecord Initialized");
-        } else {
-            Log.d("AUDIO", "AudioRecord failed to initialize");
-        }
+//        int freq = 44100;
+//        int chan = AudioFormat.CHANNEL_IN_STEREO;
+//        int enc  = AudioFormat.ENCODING_PCM_16BIT;
+//        int src  = MediaRecorder.AudioSource.DEFAULT;
+//        int buflen = AudioRecord.getMinBufferSize(freq, chan, enc);
+//        mAudioRecorder = new AudioRecord(src,freq,chan,enc,20*buflen);
+//        if(mAudioRecorder.getState() == AudioRecord.STATE_INITIALIZED) {
+//            Log.d("AUDIO", "AudioRecord Initialized");
+//        } else {
+//            Log.d("AUDIO", "AudioRecord failed to initialize");
+//        }
+        final Audio_Record mAudioRecorder = new Audio_Record();
 
         Button btnChange = (Button) findViewById(R.id.startButton);
         btnChange.setOnClickListener(new View.OnClickListener() {
@@ -143,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         Log.d("WRITING FILE", "OS Created");
                         startTime = System.nanoTime();
                         state = RECORDING;
+                        mAudioRecorder.startRecording();
                         state_txt.setText("RECORDING...");
                         Log.d("STATE", "Started Recording");
 
@@ -153,8 +155,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 else if(state == RECORDING){
                     try {
                         os.close();
+
                         state = START;
                         Log.d("WRITING FILE", "OS Closed");
+                        mAudioRecorder.stopRecording();
                         state_txt.setText("START RECORDING");
                         Log.d("STATE", "Stopped Recording");
                     }catch(Exception e){
