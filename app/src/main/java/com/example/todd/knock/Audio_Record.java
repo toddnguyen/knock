@@ -22,7 +22,7 @@ import java.io.IOException;
 public class Audio_Record extends Activity {
     private static final int RECORDER_SAMPLERATE = 44100;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_STEREO;
-    private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_8BIT;
     private AudioRecord recorder = null;
     private Thread recordingThread = null;
     private boolean isRecording = false;
@@ -32,26 +32,14 @@ public class Audio_Record extends Activity {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.main);
 
-//        setButtonHandlers();
-//        enableButtons(false);
-
         int bufferSize = AudioRecord.getMinBufferSize(RECORDER_SAMPLERATE,
                 RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
     }
 
-//    private void setButtonHandlers() {
-//        ((Button) findViewById(R.id.btnStart)).setOnClickListener(btnClick);
-//        ((Button) findViewById(R.id.btnStop)).setOnClickListener(btnClick);
-//    }
 
     private void enableButton(int id, boolean isEnable) {
         ((Button) findViewById(id)).setEnabled(isEnable);
     }
-
-//    private void enableButtons(boolean isRecording) {
-//        enableButton(R.id.btnStart, !isRecording);
-//        enableButton(R.id.btnStop, isRecording);
-//    }
 
     int BufferElements2Rec = 88200; // want to play 2048 (2K) since 2 bytes we use only 1024
     int BytesPerElement = 2; // 2 bytes in 16bit format
