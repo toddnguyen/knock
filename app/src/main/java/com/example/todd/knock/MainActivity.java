@@ -11,6 +11,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.annotation.IntegerRes;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -39,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView mGyro_z;
 
     private Audio_Record mAudioRecorder;
+    private Handler handler;
+
 
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -127,10 +130,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //        }
         final Audio_Record mAudioRecorder = new Audio_Record();
 
+
         Button btnChange = (Button) findViewById(R.id.startButton);
         btnChange.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                handler = new Handler();
+                Runnable stopRecordRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        TextView state_txt = (TextView) findViewById(R.id.stateText);
+                        try{
+                            os.close();
+                        } catch(Exception e){
+
+                        }
+                        state = START;
+                        Log.d("WRITING FILE", "OS Closed");
+                        mAudioRecorder.stopRecording();
+                        state_txt.setText("START RECORDING");
+                        Log.d("STATE", "Stopped Recording");
+                    }
+                };
                 TextView state_txt = (TextView) findViewById(R.id.stateText);
                 //state_txt.setText("START RECORDING");
 
@@ -147,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         mAudioRecorder.startRecording();
                         state_txt.setText("RECORDING...");
                         Log.d("STATE", "Started Recording");
+                        handler.postDelayed(stopRecordRunnable, 1000);
 
                     }catch (Exception e){
                         Log.d("WRITING FILE", e.toString());

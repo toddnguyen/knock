@@ -41,7 +41,7 @@ public class Audio_Record extends Activity {
         ((Button) findViewById(id)).setEnabled(isEnable);
     }
 
-    int BufferElements2Rec = 88200; // want to play 2048 (2K) since 2 bytes we use only 1024
+    int BufferElements2Rec = 44100; // want to play 2048 (2K) since 2 bytes we use only 1024
     int BytesPerElement = 2; // 2 bytes in 16bit format
 
     public void startRecording() {
