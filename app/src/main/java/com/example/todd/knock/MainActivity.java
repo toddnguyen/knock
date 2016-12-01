@@ -148,9 +148,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         }
                         state = START;
                         Log.d("WRITING FILE", "OS Closed");
+                        short[] sData = mAudioRecorder.getValues();
                         mAudioRecorder.stopRecording();
                         state_txt.setText("START RECORDING");
                         Log.d("STATE", "Stopped Recording");
+
+                        try{
+                            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.csv");
+                            Log.d("WRITING FILE", "File created");
+                            os = new FileOutputStream(file);
+                            for(int i = 0; i < sData.length; i++){
+                                String data = String.valueOf(sData[i]) + "\n";
+                                os.write(data.getBytes());
+                            }
+                            os.close();
+
+                        } catch(Exception e){}
                     }
                 };
                 TextView state_txt = (TextView) findViewById(R.id.stateText);

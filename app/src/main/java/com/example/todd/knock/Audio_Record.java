@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by Todd on 11/13/16.
@@ -22,7 +24,17 @@ import java.io.IOException;
 public class Audio_Record extends Activity {
     private static final int RECORDER_SAMPLERATE = 44100;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_STEREO;
-    private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_8BIT;
+    private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+    static int BufferElements2Rec = 44100; // want to play 2048 (2K) since 2 bytes we use only 1024
+    static int BytesPerElement = 2; // 2 bytes in 16bit format
+    private short sData[] = new short[44100];
+    private byte bDataCopy[];
+
+    private final ReentrantLock lock = new ReentrantLock();
+
+
+    private int count = 0;
+
     private AudioRecord recorder = null;
     private Thread recordingThread = null;
     private boolean isRecording = false;
@@ -31,7 +43,6 @@ public class Audio_Record extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.main);
-
         int bufferSize = AudioRecord.getMinBufferSize(RECORDER_SAMPLERATE,
                 RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
     }
@@ -41,8 +52,7 @@ public class Audio_Record extends Activity {
         ((Button) findViewById(id)).setEnabled(isEnable);
     }
 
-    int BufferElements2Rec = 44100; // want to play 2048 (2K) since 2 bytes we use only 1024
-    int BytesPerElement = 2; // 2 bytes in 16bit format
+
 
     public void startRecording() {
 
@@ -75,10 +85,7 @@ public class Audio_Record extends Activity {
 
     private void writeAudioDataToFile() {
         // Write the output audio in byte
-
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.pcm");
-
-        short sData[] = new short[BufferElements2Rec];
 
         FileOutputStream os = null;
         try {
@@ -89,13 +96,15 @@ public class Audio_Record extends Activity {
 
         while (isRecording) {
             // gets the voice output from microphone to byte format
-
+            count++;
+            lock.lock();
             recorder.read(sData, 0, BufferElements2Rec);
-            System.out.println("Short wirting to file" + sData.toString());
+            lock.unlock();
             try {
                 // // writes the data to file from buffer
                 // // stores the voice buffer
                 byte bData[] = short2byte(sData);
+                bDataCopy = short2byte(sData);
                 os.write(bData, 0, BufferElements2Rec * BytesPerElement);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -108,10 +117,23 @@ public class Audio_Record extends Activity {
         }
     }
 
+    public short[] getValues() {
+        short sDataCopy[] = new short[44100];
+        lock.lock();
+        System.arraycopy( sData, 0, sDataCopy, 0, sData.length );
+        lock.unlock();
+        return sDataCopy;
+    }
+
     public void stopRecording() {
         // stops the recording activity
         if (null != recorder) {
+//            lock.lock();
+//            System.arraycopy( sData, 0, retData, 0, sData.length );
+//            lock.unlock();
+
             isRecording = false;
+//            recorder.read(retData, 0, BufferElements2Rec);
             recorder.stop();
             recorder.release();
             recorder = null;
