@@ -28,7 +28,7 @@ public class Audio_Record extends Activity {
     static int BufferElements2Rec = 44100; // want to play 2048 (2K) since 2 bytes we use only 1024
     static int BytesPerElement = 2; // 2 bytes in 16bit format
     private short sData[] = new short[44100];
-    private byte bDataCopy[];
+    private byte[] bDataCopy;
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -77,7 +77,7 @@ public class Audio_Record extends Activity {
         for (int i = 0; i < shortArrsize; i++) {
             bytes[i * 2] = (byte) (sData[i] & 0x00FF);
             bytes[(i * 2) + 1] = (byte) (sData[i] >> 8);
-            sData[i] = 0;
+//            sData[i] = 0;
         }
         return bytes;
 
@@ -104,7 +104,7 @@ public class Audio_Record extends Activity {
                 // // writes the data to file from buffer
                 // // stores the voice buffer
                 byte bData[] = short2byte(sData);
-                bDataCopy = short2byte(sData);
+                this.bDataCopy = bData;
                 os.write(bData, 0, BufferElements2Rec * BytesPerElement);
             } catch (IOException e) {
                 e.printStackTrace();
