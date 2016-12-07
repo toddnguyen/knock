@@ -27,7 +27,7 @@ public class Audio_Record extends Activity {
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     static int BufferElements2Rec = 44100; // want to play 2048 (2K) since 2 bytes we use only 1024
     static int BytesPerElement = 2; // 2 bytes in 16bit format
-    private short sData[] = new short[44100];
+    private short sData[] = new short[44100*2];
     private byte bDataCopy[];
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -98,14 +98,14 @@ public class Audio_Record extends Activity {
             // gets the voice output from microphone to byte format
             count++;
             lock.lock();
-            recorder.read(sData, 0, BufferElements2Rec);
+            recorder.read(sData, 0, BufferElements2Rec*2);
             lock.unlock();
             try {
                 // // writes the data to file from buffer
                 // // stores the voice buffer
                 byte bData[] = short2byte(sData);
                 bDataCopy = short2byte(sData);
-                os.write(bData, 0, BufferElements2Rec * BytesPerElement);
+                os.write(bData, 0, BufferElements2Rec * BytesPerElement * 2);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -118,7 +118,7 @@ public class Audio_Record extends Activity {
     }
 
     public short[] getValues() {
-        short sDataCopy[] = new short[44100];
+        short sDataCopy[] = new short[44100*2];
         lock.lock();
         System.arraycopy( sData, 0, sDataCopy, 0, sData.length );
         lock.unlock();
