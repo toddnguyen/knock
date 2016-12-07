@@ -141,6 +141,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     @Override
                     public void run() {
                         TextView state_txt = (TextView) findViewById(R.id.stateText);
+                        TextView center = (TextView) findViewById(R.id.textView8);
+                        center.setText("PROCESSING");
                         try{
                             os.close();
                         } catch(Exception e){
@@ -157,12 +159,42 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.csv");
                             Log.d("WRITING FILE", "File created");
                             os = new FileOutputStream(file);
+                            short[] A = new short[sData.length/2];
+                            short[] B = new short[sData.length/2];
                             for(int i = 0; i < sData.length; i++){
+                                if(i%2 == 0){
+                                    A[(int)i/2] = sData[i];
+                                } else {
+                                    B[(int)i/2] = sData[i];
+                                }
                                 String data = String.valueOf(sData[i]) + "\n";
                                 os.write(data.getBytes());
                             }
                             os.close();
 
+                            CrossCorrelation corr = new CrossCorrelation();
+                            long[] xcorrelation = corr.crossCorrelate(A,B);
+                            File xcorrfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "xcorr.csv");
+                            os = new FileOutputStream(xcorrfile);
+                            for(int i = 0; i < xcorrelation.length; i++){
+                                String data = String.valueOf(xcorrelation[i]) + "\n";
+                                os.write(data.getBytes());
+                            }
+                            os.close();
+
+                            int maxindex = 0;
+                            long maxvalue = 0;
+                            for(int i = (xcorrelation.length/2)-200; i < xcorrelation.length/2 + 200; i++){
+                                if(xcorrelation[i] > maxvalue){
+                                    maxindex = i;
+                                    maxvalue = xcorrelation[i];
+                                }
+                            }
+                            if(maxindex > xcorrelation.length/2 - 1){
+                                center.setText("^");
+                            } else {
+                                center.setText("v");
+                            }
                         } catch(Exception e){}
                     }
                 };
@@ -181,6 +213,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         state = RECORDING;
                         mAudioRecorder.startRecording();
                         state_txt.setText("RECORDING...");
+                        TextView center = (TextView) findViewById(R.id.textView8);
+                        center.setText("RECORDING");
                         Log.d("STATE", "Started Recording");
                         handler.postDelayed(stopRecordRunnable, 1000);
 

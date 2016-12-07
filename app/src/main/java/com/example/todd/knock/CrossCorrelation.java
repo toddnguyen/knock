@@ -16,7 +16,7 @@ public class CrossCorrelation {
 
         long[] corr = new long[length];
 
-        for(int i = 0; i < length; i++){
+        for(int i = A.length-200; i < A.length+200; i++){
             if(i == A.length-1) {
                 for(int j = 0; j <= i; j++) {
                     corr[i] += A[j] * B[j];
