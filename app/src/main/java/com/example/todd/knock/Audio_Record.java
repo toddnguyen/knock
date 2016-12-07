@@ -105,8 +105,8 @@ public class Audio_Record extends Activity {
                 // // stores the voice buffer
                 byte bData[] = short2byte(sData);
                 bDataCopy = short2byte(sData);
-                os.write(bData, 0, BufferElements2Rec * BytesPerElement * 2);
-            } catch (IOException e) {
+//                os.write(bData, 0, BufferElements2Rec * BytesPerElement * 2);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

@@ -24,6 +24,8 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import static java.lang.Math.abs;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     //Sensor handler
@@ -39,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView mGyro_y;
     private TextView mGyro_z;
 
-    private Audio_Record mAudioRecorder;
+
     private Handler handler;
 
 
@@ -66,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float gyro_Y;
     private float gyro_Z;
 
+    private final Audio_Record mAudioRecorder = new Audio_Record();
+
+
     //Records initial time for app
     private long startTime = 0;
 
@@ -74,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private long currKnock = 0;
     private int numKnock = 0;
     private TextView mNumKnock;
+
+    private boolean knockdetected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         gyro_sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
         mSensorManager.registerListener(this, accel_sensor, SensorManager.SENSOR_DELAY_FASTEST);
-        mSensorManager.registerListener(this, gyro_sensor, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(this, gyro_sensor, SensorManager.SENSOR_DELAY_NORMAL);
 
         int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
@@ -128,115 +135,117 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //        } else {
 //            Log.d("AUDIO", "AudioRecord failed to initialize");
 //        }
-        final Audio_Record mAudioRecorder = new Audio_Record();
+//        final Audio_Record mAudioRecorder = new Audio_Record();
 
-
-        Button btnChange = (Button) findViewById(R.id.startButton);
-        btnChange.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                handler = new Handler();
-                Runnable stopRecordRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        TextView state_txt = (TextView) findViewById(R.id.stateText);
-                        TextView center = (TextView) findViewById(R.id.textView8);
-                        center.setText("PROCESSING");
-                        try{
-                            os.close();
-                        } catch(Exception e){
-
-                        }
-                        state = START;
-                        Log.d("WRITING FILE", "OS Closed");
-                        short[] sData = mAudioRecorder.getValues();
-                        mAudioRecorder.stopRecording();
-                        state_txt.setText("START RECORDING");
-                        Log.d("STATE", "Stopped Recording");
-
-                        try{
-                            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.csv");
-                            Log.d("WRITING FILE", "File created");
-                            os = new FileOutputStream(file);
-                            short[] A = new short[sData.length/2];
-                            short[] B = new short[sData.length/2];
-                            for(int i = 0; i < sData.length; i++){
-                                if(i%2 == 0){
-                                    A[(int)i/2] = sData[i];
-                                } else {
-                                    B[(int)i/2] = sData[i];
-                                }
-                                String data = String.valueOf(sData[i]) + "\n";
-                                os.write(data.getBytes());
-                            }
-                            os.close();
-
-                            CrossCorrelation corr = new CrossCorrelation();
-                            long[] xcorrelation = corr.crossCorrelate(A,B);
-                            File xcorrfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "xcorr.csv");
-                            os = new FileOutputStream(xcorrfile);
-                            for(int i = 0; i < xcorrelation.length; i++){
-                                String data = String.valueOf(xcorrelation[i]) + "\n";
-                                os.write(data.getBytes());
-                            }
-                            os.close();
-
-                            int maxindex = 0;
-                            long maxvalue = 0;
-                            for(int i = (xcorrelation.length/2)-200; i < xcorrelation.length/2 + 200; i++){
-                                if(xcorrelation[i] > maxvalue){
-                                    maxindex = i;
-                                    maxvalue = xcorrelation[i];
-                                }
-                            }
-                            if(maxindex > xcorrelation.length/2 - 1){
-                                center.setText("^");
-                            } else {
-                                center.setText("v");
-                            }
-                        } catch(Exception e){}
-                    }
-                };
-                TextView state_txt = (TextView) findViewById(R.id.stateText);
-                //state_txt.setText("START RECORDING");
-
-                //Button changes the state
-                if(state == START) {
-                    try {
-                        // get the path to sdcard
-                        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "sensors.csv");
-                        Log.d("WRITING FILE", "File created");
-                        os = new FileOutputStream(file);
-                        Log.d("WRITING FILE", "OS Created");
-                        startTime = System.nanoTime();
-                        state = RECORDING;
-                        mAudioRecorder.startRecording();
-                        state_txt.setText("RECORDING...");
-                        TextView center = (TextView) findViewById(R.id.textView8);
-                        center.setText("RECORDING");
-                        Log.d("STATE", "Started Recording");
-                        handler.postDelayed(stopRecordRunnable, 1000);
-
-                    }catch (Exception e){
-                        Log.d("WRITING FILE", e.toString());
-                    }
-                }
-                else if(state == RECORDING){
-                    try {
-                        os.close();
-
-                        state = START;
-                        Log.d("WRITING FILE", "OS Closed");
-                        mAudioRecorder.stopRecording();
-                        state_txt.setText("START RECORDING");
-                        Log.d("STATE", "Stopped Recording");
-                    }catch(Exception e){
-
-                    }
-                }
-            }
-        });
+//        Button btnChange = (Button) findViewById(R.id.startButton);
+//        btnChange.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//
+//                handler = new Handler();
+//                Runnable stopRecordRunnable = new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        TextView state_txt = (TextView) findViewById(R.id.stateText);
+//                        TextView center = (TextView) findViewById(R.id.textView8);
+//                        center.setText("PROCESSING");
+//                        try{
+//                            os.close();
+//                        } catch(Exception e){
+//
+//                        }
+//                        state = START;
+//                        Log.d("WRITING FILE", "OS Closed");
+//                        short[] sData = mAudioRecorder.getValues();
+//                        mAudioRecorder.stopRecording();
+//                        state_txt.setText("START RECORDING");
+//                        Log.d("STATE", "Stopped Recording");
+//
+//                        try{
+//                            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.csv");
+//                            Log.d("WRITING FILE", "File created");
+//                            os = new FileOutputStream(file);
+//                            short[] A = new short[sData.length/2];
+//                            short[] B = new short[sData.length/2];
+//                            for(int i = 0; i < sData.length; i++){
+//                                if(i%2 == 0){
+//                                    A[(int)i/2] = sData[i];
+//                                } else {
+//                                    B[(int)i/2] = sData[i];
+//                                }
+//                                String data = String.valueOf(sData[i]) + "\n";
+//                                os.write(data.getBytes());
+//                            }
+//                            os.close();
+//
+//                            CrossCorrelation corr = new CrossCorrelation();
+//                            long[] xcorrelation = corr.crossCorrelate(A,B);
+//                            File xcorrfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "xcorr.csv");
+//                            os = new FileOutputStream(xcorrfile);
+//                            for(int i = 0; i < xcorrelation.length; i++){
+//                                String data = String.valueOf(xcorrelation[i]) + "\n";
+//                                os.write(data.getBytes());
+//                            }
+//                            os.close();
+//
+//                            int maxindex = 0;
+//                            long maxvalue = 0;
+//                            for(int i = (xcorrelation.length/2)-200; i < xcorrelation.length/2 + 200; i++){
+//                                if(xcorrelation[i] >= 1000 && xcorrelation[i] > maxvalue){
+//                                    maxindex = i;
+//                                    maxvalue = xcorrelation[i];
+//                                }
+//                            }
+//                            int difference = abs(maxindex - xcorrelation.length/2);
+//                            if(maxindex == 0 || difference < 20) {
+//                                center.setText("TRY AGAIN");
+//                            } if(maxindex > xcorrelation.length/2 - 1){
+//                                center.setText("^");
+//                            } else {
+//                                center.setText("v");
+//                            }
+//                        } catch(Exception e){}
+//                    }
+//                };
+//                TextView state_txt = (TextView) findViewById(R.id.stateText);
+//                //state_txt.setText("START RECORDING");
+//
+//                //Button changes the state
+//                if(state == START) {
+//                    try {
+//                        // get the path to sdcard
+//                        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "sensors.csv");
+//                        Log.d("WRITING FILE", "File created");
+//                        os = new FileOutputStream(file);
+//                        Log.d("WRITING FILE", "OS Created");
+//                        startTime = System.nanoTime();
+//                        state = RECORDING;
+//                        mAudioRecorder.startRecording();
+//                        state_txt.setText("RECORDING...");
+//                        TextView center = (TextView) findViewById(R.id.textView8);
+//                        center.setText("RECORDING");
+//                        Log.d("STATE", "Started Recording");
+//                        handler.postDelayed(stopRecordRunnable, 1000);
+//
+//                    }catch (Exception e){
+//                        Log.d("WRITING FILE", e.toString());
+//                    }
+//                }
+//                else if(state == RECORDING){
+//                    try {
+//                        os.close();
+//
+//                        state = START;
+//                        Log.d("WRITING FILE", "OS Closed");
+//                        mAudioRecorder.stopRecording();
+//                        state_txt.setText("START RECORDING");
+//                        Log.d("STATE", "Stopped Recording");
+//                    }catch(Exception e){
+//
+//                    }
+//                }
+//            }
+//        });
 
     }
 
@@ -248,6 +257,75 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
+
+
+        handler = new Handler();
+        Runnable stopRecordRunnable = new Runnable() {
+            @Override
+            public void run() {
+                TextView state_txt = (TextView) findViewById(R.id.stateText);
+                TextView center = (TextView) findViewById(R.id.textView8);
+                center.setText("PROCESSING");
+                try{
+                    os.close();
+                } catch(Exception e){
+
+                }
+                state = START;
+                Log.d("WRITING FILE", "OS Closed");
+                short[] sData = mAudioRecorder.getValues();
+                mAudioRecorder.stopRecording();
+                state_txt.setText("START RECORDING");
+                Log.d("STATE", "Stopped Recording");
+
+                try{
+                    File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.csv");
+//                    Log.d("WRITING FILE", "File created");
+//                    os = new FileOutputStream(file);
+                    short[] A = new short[sData.length/2];
+                    short[] B = new short[sData.length/2];
+                    for(int i = 0; i < sData.length; i++){
+                        if(i%2 == 0){
+                            A[(int)i/2] = sData[i];
+                        } else {
+                            B[(int)i/2] = sData[i];
+                        }
+//                        String data = String.valueOf(sData[i]) + "\n";
+//                        os.write(data.getBytes());
+                    }
+//                    os.close();
+
+                    CrossCorrelation corr = new CrossCorrelation();
+                    long[] xcorrelation = corr.crossCorrelate(A,B);
+//                    File xcorrfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "xcorr.csv");
+//                    os = new FileOutputStream(xcorrfile);
+//                    for(int i = 0; i < xcorrelation.length; i++){
+//                        String data = String.valueOf(xcorrelation[i]) + "\n";
+//                        os.write(data.getBytes());
+//                    }
+//                    os.close();
+
+                    int maxindex = 0;
+                    long maxvalue = 0;
+                    for(int i = (xcorrelation.length/2)-200; i < xcorrelation.length/2 + 200; i++){
+                        if(xcorrelation[i] >= 800 && xcorrelation[i] > maxvalue){
+                            maxindex = i;
+                            maxvalue = xcorrelation[i];
+                        }
+                    }
+                    int difference = abs(maxindex - xcorrelation.length/2);
+                    if(!knockdetected || maxindex == 0 || difference < 14) {
+                        center.setText("TRY AGAIN");
+                    } else if(maxindex > xcorrelation.length/2 - 1){
+                        center.setText("^");
+                    } else {
+                        center.setText("v");
+                    }
+                } catch(Exception e){}
+
+                knockdetected = false;
+            }
+        };
 
         //Case statement for different types of sensor events
         switch (sensor.getType()) {
@@ -261,13 +339,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mAccel_z.setText("Z Accel: " + event.values[2]);
 
                 //Process knock using accel z - THRESHOLD METHOD
-                if(accel_Z>10.5 || accel_Z<-10.5){
+                if((accel_Z>10.5 || accel_Z<-10.5) && (abs(gyro_X) < 0.1) && (abs(gyro_Y) < 0.1) && (abs(gyro_Z) < 0.1)){
                     currKnock = System.currentTimeMillis();
-                    if((currKnock-prevKnock)>100){
+                    if((currKnock-prevKnock)>2000 && state == START){
                         numKnock++;
-                    }
 
-                    prevKnock = currKnock;
+                        mAudioRecorder.startRecording();
+                        state = RECORDING;
+                        TextView center = (TextView) findViewById(R.id.textView8);
+                        center.setText("!!!");
+                        handler.postDelayed(stopRecordRunnable, 1000);
+                        prevKnock = currKnock;
+                    } else if(state == RECORDING){
+                        knockdetected = true;
+                    }
                 }
 
                 mNumKnock.setText("Num Knocks: "+numKnock);
