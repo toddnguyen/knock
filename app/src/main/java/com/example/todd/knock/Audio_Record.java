@@ -133,7 +133,6 @@ public class Audio_Record extends Activity {
 //            lock.unlock();
 
             isRecording = false;
-//            recorder.read(retData, 0, BufferElements2Rec);
             recorder.stop();
             recorder.release();
             recorder = null;
@@ -141,22 +140,6 @@ public class Audio_Record extends Activity {
         }
     }
 
-//    private View.OnClickListener btnClick = new View.OnClickListener() {
-//        public void onClick(View v) {
-//            switch (v.getId()) {
-//                case R.id.btnStart: {
-//                    enableButtons(true);
-//                    startRecording();
-//                    break;
-//                }
-//                case R.id.btnStop: {
-//                    enableButtons(false);
-//                    stopRecording();
-//                    break;
-//                }
-//            }
-//        }
-//    };
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
