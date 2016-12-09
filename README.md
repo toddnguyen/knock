@@ -8,6 +8,10 @@ Project presentation here: https://dl.dropboxusercontent.com/u/2321396/knock_pre
 Requirements: Stereo microphone
 Open app, knock twice on one side of the phone (top or bottom), wait for phone to point direction.
 
+### Demo video (click picture to view)
+
+[![Demo Video](https://img.youtube.com/vi/xmT30UUIg0w/0.jpg)](https://www.youtube.com/watch?v=xmT30UUIg0w)
+
 ### Motivation
 Imagine you are cooking and your hands are dirty, but you want to scroll the page on the recipe you are looking at. You cannot touch your phone due to dirty hands, but knocking on the countertop next to it is intuitive and could avoids the issue of dirtying your phone's screen.
 There are other ways that knocking around your phone could be useful; raising and lowering the volume, or making any surface a smart surface.
