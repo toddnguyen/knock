@@ -1,7 +1,7 @@
 # knock
-By Todd Nguyen and Alvin Wu
-University of Illinois at Urbana-Champaign
-ECE 498 Mobile Sensing Final Project
+By Todd Nguyen and Alvin Wu  
+University of Illinois at Urbana-Champaign  
+ECE 498 Mobile Sensing Final Project  
 Project presentation here: https://dl.dropboxusercontent.com/u/2321396/knock_presentation.pptx
 
 ### How to use the app
