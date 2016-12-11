@@ -45,9 +45,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor gyro_sensor;
 
     //State variables
-    private final int START = 0;
-    private final int RECORDING = 1;
-    private int state = START;
+    private enum State { READY, RECORDING };
+    private State state = State.READY;
     private Handler handler;
 
     private FileOutputStream os;
@@ -116,8 +115,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Runnable stopRecordRunnable = new Runnable() {
             @Override
             public void run() {
+                long startTime = System.nanoTime();
                 TextView center = (TextView) findViewById(R.id.textView8);
-                state = START;
+                state = State.READY;
                 short[] sData = mAudioRecorder.getValues();
                 mAudioRecorder.stopRecording();
 
@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         os.close();
                     }
 
-                    int xcorrOffset = 150;
+                    int xcorrOffset = 100;
                     CrossCorrelation corr = new CrossCorrelation(xcorrOffset);
                     long[] xcorrelation = corr.crossCorrelate(A,B);
 
@@ -176,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 } catch(Exception e){}
 
                 knockdetected = false;
+                Log.d("KNOCK", "Computation time is: " + String.valueOf((System.nanoTime() - startTime)));
             }
         };
 
@@ -189,15 +190,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //Process knock using accel z - THRESHOLD METHOD
                 if((accel_Z>10.5 || accel_Z<-10.5) && (abs(gyro_X) < 0.1) && (abs(gyro_Y) < 0.1) && (abs(gyro_Z) < 0.1)){
                     currKnock = event.timestamp;
-                    if(state == START){
+                    if(state == State.READY){
                         mAudioRecorder.startRecording();
-                        state = RECORDING;
+                        state = state.RECORDING;
                         initialKnock = event.timestamp;
                         TextView center = (TextView) findViewById(R.id.textView8);
                         center.setText("!!!");
                         handler.postDelayed(stopRecordRunnable, 1000);
                         prevKnock = currKnock;
-                    } else if(state == RECORDING){
+                    } else if(state == state.RECORDING){
                         knockdetected = true;
                     }
                 }
