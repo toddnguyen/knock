@@ -8,20 +8,18 @@ import java.util.List;
  */
 
 public class CrossCorrelation {
-    private int offset;
-    private boolean enable_offset;
-
     public CrossCorrelation(){
-        offset = 0;
-        enable_offset = false;
     }
 
-    public CrossCorrelation(int dist){
-        offset = dist;
-        enable_offset = true;
+    public long[] crossCorrelate(short[] A, short[] B){
+        return crossCorrelate(A, B, false, 0);
     }
 
-    public long[] crossCorrelate(ChannelList A, ChannelList B){
+    public long[] crossCorrelate(short[] A, short[] B, int maxLags){
+        return crossCorrelate(A, B, true, maxLags);
+    }
+
+    public long[] crossCorrelate(short[] A, short[] B, boolean enable_offset, int maxLags){
         if(A.length != B.length){
             return null;
         }
@@ -36,22 +34,22 @@ public class CrossCorrelation {
         long[] corr = new long[xCorrLength];
 
         if(enable_offset){
-            start = aLength - 200;
-            end = aLength + 200;
+            start = aLength - maxLags;
+            end = aLength + maxLags;
         }
 
         for(int i = start; i < end; i++){
             if(i == aLength-1) {
                 for(int j = 0; j <= i; j++) {
-                    corr[i] += A.get(j) * B.get(j);
+                    corr[i] += A[j] * B[j];
                 }
             } else if(i < aLength){
                 for(int j = 0; j <= i; j++) {
-                    corr[i] += A.get(aLength - i - 1 + j) * B.get(j);
+                    corr[i] += A[aLength - i - 1 + j] * B[j];
                 }
             } else{
                 for(int j = 0; j <= xCorrLength - 1 - i; j++) {
-                    corr[i] += A.get(j) * B.get(bLength - xCorrLength + i + j);
+                    corr[i] += A[j] * B[bLength - xCorrLength + i + j];
                 }
             }
         }

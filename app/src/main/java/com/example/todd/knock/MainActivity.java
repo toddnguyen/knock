@@ -117,13 +117,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void run() {
                 long startTime = System.nanoTime();
                 TextView center = (TextView) findViewById(R.id.textView8);
-                state = State.READY;
                 short[] sData = mAudioRecorder.getValues();
                 mAudioRecorder.stopRecording();
 
                 try{
-                    ChannelList A = new ChannelList(sData, 0);
-                    ChannelList B = new ChannelList(sData, 1);
+                    int length = sData.length;
+                    short[] A = new short[length/2];
+                    short[] B = new short[length/2];
+
+                    for(int i = 0; i < length/2; i++){
+                        A[i] = sData[2*i];
+                        B[i] = sData[2*i + 1];
+                    }
 
                     if(DEBUG){
                         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.csv");
@@ -137,8 +142,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     }
 
                     int xcorrOffset = 100;
-                    CrossCorrelation corr = new CrossCorrelation(xcorrOffset);
-                    long[] xcorrelation = corr.crossCorrelate(A,B);
+                    CrossCorrelation corr = new CrossCorrelation();
+                    long[] xcorrelation = corr.crossCorrelate(A, B, 150);
 
                     if(xcorrelation != null){
                         int maxindex = 0;
@@ -151,10 +156,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         }
                         int difference = abs(maxindex - xcorrelation.length/2);
                         if(!knockdetected || maxindex == 0 || difference < 14) {
+                            Log.d("KNOCK", "X");
                             center.setText("X");
                         } else if(maxindex > xcorrelation.length/2 - 1){
+                            Log.d("KNOCK", "^");
                             center.setText("^");
                         } else {
+                            Log.d("KNOCK", "v");
                             center.setText("v");
                         }
 
@@ -173,9 +181,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         center.setText("X");
                     }
 
-                } catch(Exception e){}
+                } catch(Exception e){
+                    Log.e("KNOCK", e.toString());
+                }
 
                 knockdetected = false;
+                state = State.READY;
                 Log.d("KNOCK", "Computation time is: " + String.valueOf((System.nanoTime() - startTime)));
             }
         };
