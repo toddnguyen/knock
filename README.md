@@ -45,3 +45,13 @@ Using the microphone all the time uses a lot of power, instead, we detect two kn
 
 ### Future work
 * Filtering on microphones
+* Using fast convolution for the cross correlation
+* General optimization and speed improvements
+
+### FAQs
+##### How come you use cross-correlation and not magnitude?
+We thought that cross-correlation would be more accurate, also by analyzing the phase difference we hoped that we would also be able to get a little more information about the direction (angle it came from).
+
+##### What can this app be used for?
+As of right now, it's basically a proof of concept. This app basically only shows direction of knocks, and can't be used for any actual control. But in the future, we might make something out of it.
+
