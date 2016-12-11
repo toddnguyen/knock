@@ -25,9 +25,9 @@ public class Audio_Record extends Activity {
     private static final int RECORDER_SAMPLERATE = 44100;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_STEREO;
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
-    static int BufferElements2Rec = 44100; // want to play 2048 (2K) since 2 bytes we use only 1024
-    static int BytesPerElement = 2; // 2 bytes in 16bit format
-    private short sData[] = new short[44100*2];
+    private static final int BufferElements2Rec = 44100; // want to play 2048 (2K) since 2 bytes we use only 1024
+    private static final int BytesPerElement = 2; // 2 bytes in 16bit format
+    private short sData[] = new short[BufferElements2Rec*BytesPerElement];
     private byte bDataCopy[];
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -128,10 +128,6 @@ public class Audio_Record extends Activity {
     public void stopRecording() {
         // stops the recording activity
         if (null != recorder) {
-//            lock.lock();
-//            System.arraycopy( sData, 0, retData, 0, sData.length );
-//            lock.unlock();
-
             isRecording = false;
             recorder.stop();
             recorder.release();

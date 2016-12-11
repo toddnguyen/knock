@@ -28,12 +28,8 @@ import static java.lang.Math.abs;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-    //Sensor handler
-    private SensorManager mSensorManager;
-    private Sensor accel_sensor;
-    private Sensor gyro_sensor;
-
-    private Handler handler;
+    // set to true to enable debug CSV
+    private static final boolean DEBUG = false;
 
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -43,10 +39,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     };
     private static final int RECORD_REQUEST_CODE = 101;
 
+    //Sensor handler
+    private SensorManager mSensorManager;
+    private Sensor accel_sensor;
+    private Sensor gyro_sensor;
+
     //State variables
     private final int START = 0;
     private final int RECORDING = 1;
     private int state = START;
+    private Handler handler;
 
     private FileOutputStream os;
 
@@ -58,17 +60,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float gyro_Y;
     private float gyro_Z;
 
+    //Audio
     private final Audio_Record mAudioRecorder = new Audio_Record();
-
-
-    //Records initial time for app
-    private long startTime = 0;
 
     //Knock Variables
     private long prevKnock = 0;
     private long currKnock = 0;
-    private int numKnock = 0;
-    private TextView mNumKnock;
+    private long initialKnock = 0;
 
     private boolean knockdetected = false;
 
@@ -119,57 +117,62 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void run() {
                 TextView center = (TextView) findViewById(R.id.textView8);
-
-                center.setText("PROCESSING");
                 state = START;
-                Log.d("WRITING FILE", "OS Closed");
                 short[] sData = mAudioRecorder.getValues();
                 mAudioRecorder.stopRecording();
-                Log.d("STATE", "Stopped Recording");
 
                 try{
-                    File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.csv");
-//                    Log.d("WRITING FILE", "File created");
-//                    os = new FileOutputStream(file);
-                    short[] A = new short[sData.length/2];
-                    short[] B = new short[sData.length/2];
-                    for(int i = 0; i < sData.length; i++){
-                        if(i%2 == 0){
-                            A[(int)i/2] = sData[i];
-                        } else {
-                            B[(int)i/2] = sData[i];
-                        }
-//                        String data = String.valueOf(sData[i]) + "\n";
-//                        os.write(data.getBytes());
-                    }
-//                    os.close();
+                    ChannelList A = new ChannelList(sData, 0);
+                    ChannelList B = new ChannelList(sData, 1);
 
-                    CrossCorrelation corr = new CrossCorrelation();
+                    if(DEBUG){
+                        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "audio.csv");
+                        os = new FileOutputStream(file);
+                        int sDataLength = sData.length;
+                        for(int i = 0; i < sDataLength; i++){
+                            String data = String.valueOf(sData[i]) + "\n";
+                            os.write(data.getBytes());
+                        }
+                        os.close();
+                    }
+
+                    int xcorrOffset = 150;
+                    CrossCorrelation corr = new CrossCorrelation(xcorrOffset);
                     long[] xcorrelation = corr.crossCorrelate(A,B);
-//                    File xcorrfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "xcorr.csv");
-//                    os = new FileOutputStream(xcorrfile);
-//                    for(int i = 0; i < xcorrelation.length; i++){
-//                        String data = String.valueOf(xcorrelation[i]) + "\n";
-//                        os.write(data.getBytes());
-//                    }
-//                    os.close();
 
-                    int maxindex = 0;
-                    long maxvalue = 0;
-                    for(int i = (xcorrelation.length/2)-200; i < xcorrelation.length/2 + 200; i++){
-                        if(xcorrelation[i] >= 800 && xcorrelation[i] > maxvalue){
-                            maxindex = i;
-                            maxvalue = xcorrelation[i];
+                    if(xcorrelation != null){
+                        int maxindex = 0;
+                        long maxvalue = 0;
+                        for(int i = (xcorrelation.length/2)-xcorrOffset; i < xcorrelation.length/2 + xcorrOffset; i++){
+                            if(xcorrelation[i] >= 800 && xcorrelation[i] > maxvalue){
+                                maxindex = i;
+                                maxvalue = xcorrelation[i];
+                            }
                         }
-                    }
-                    int difference = abs(maxindex - xcorrelation.length/2);
-                    if(!knockdetected || maxindex == 0 || difference < 14) {
-                        center.setText("X");
-                    } else if(maxindex > xcorrelation.length/2 - 1){
-                        center.setText("^");
+                        int difference = abs(maxindex - xcorrelation.length/2);
+                        if(!knockdetected || maxindex == 0 || difference < 14) {
+                            center.setText("X");
+                        } else if(maxindex > xcorrelation.length/2 - 1){
+                            center.setText("^");
+                        } else {
+                            center.setText("v");
+                        }
+
+                        if(DEBUG){
+                            File xcorrfile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Knock", "xcorr.csv");
+                            os = new FileOutputStream(xcorrfile);
+                            int xcorrlength = xcorrelation.length;
+                            for(int i = 0; i < xcorrlength; i++){
+                                String data = String.valueOf(xcorrelation[i]) + "\n";
+                                os.write(data.getBytes());
+                            }
+                            os.close();
+                        }
+
                     } else {
-                        center.setText("v");
+                        center.setText("X");
                     }
+
                 } catch(Exception e){}
 
                 knockdetected = false;
@@ -185,12 +188,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 //Process knock using accel z - THRESHOLD METHOD
                 if((accel_Z>10.5 || accel_Z<-10.5) && (abs(gyro_X) < 0.1) && (abs(gyro_Y) < 0.1) && (abs(gyro_Z) < 0.1)){
-                    currKnock = System.currentTimeMillis();
-                    if((currKnock-prevKnock)>2000 && state == START){
-                        numKnock++;
-
+                    currKnock = event.timestamp;
+                    if(state == START){
                         mAudioRecorder.startRecording();
                         state = RECORDING;
+                        initialKnock = event.timestamp;
                         TextView center = (TextView) findViewById(R.id.textView8);
                         center.setText("!!!");
                         handler.postDelayed(stopRecordRunnable, 1000);
