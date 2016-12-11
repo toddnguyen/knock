@@ -142,8 +142,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     }
 
                     int xcorrOffset = 100;
-                    CrossCorrelation corr = new CrossCorrelation();
+                    CrossCorrelation corr = new CrossCorrelation(A, B, 150);
                     long[] xcorrelation = corr.crossCorrelate(A, B, 150);
+//                    long[] xcorrelation = corr.run();
 
                     if(xcorrelation != null){
                         int maxindex = 0;
